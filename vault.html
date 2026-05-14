@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0d0b;
+    --bg-2: #161410;
+    --bg-3: #1d1a14;
+    --accent: #d4a64a;
+    --accent-warm: #e6b85a;
+    --accent-dim: #9c7a32;
+    --text: #efe7d3;
+    --text-dim: #9a917f;
+    --border: #2a2620;
+    --border-2: #3a342a;
+    --danger: #d46a6a;
+    --danger-bg: #2a1414;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 15% 0%, rgba(212,166,74,0.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 85% 100%, rgba(212,166,74,0.05), transparent 60%);
+    background-attachment: fixed;
+  }
+  .screen { max-width: 760px; margin: 0 auto; padding: 64px 28px 80px; }
+  .screen.hidden { display: none; }
+  h1, h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  h1 { font-size: 44px; color: var(--text); margin-bottom: 6px; }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  h2 { font-size: 22px; margin-bottom: 10px; }
+  h2 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 36px; max-width: 540px; }
+  input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 64px; font-family: inherit; }
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .field { margin-bottom: 14px; }
+  button, .btn {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-2);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  button:hover, .btn:hover { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible, .btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+  button.primary, .btn.primary {
+    background: var(--accent);
+    color: #0e0d0b;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+  button.primary:hover, .btn.primary:hover { background: var(--accent-warm); border-color: var(--accent-warm); color: #0e0d0b; }
+  button.armed {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  button.armed:hover { background: var(--danger); color: #0e0d0b; border-color: var(--danger); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .stack { display: flex; flex-direction: column; gap: 8px; }
+  .entry {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    background: var(--bg-2);
+  }
+  .entry-name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .entry-user { color: var(--text-dim); font-size: 13px; margin-bottom: 10px; word-break: break-all; }
+  .entry-pw {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    word-break: break-all;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    color: var(--accent);
+  }
+  .entry-notes {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 6px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .entry-actions button { padding: 5px 11px; font-size: 12px; }
+  details {
+    margin: 16px 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    background: var(--bg-2);
+  }
+  details summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 13px;
+    list-style: none;
+    user-select: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: '+ '; }
+  details[open] summary::before { content: '− '; }
+  details[open] summary { margin-bottom: 14px; }
+  .gen-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .gen-controls input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+  .gen-controls .inline {
+    margin: 0; text-transform: none; letter-spacing: 0;
+    color: var(--text); font-size: 12px; display: inline-flex;
+    align-items: center; gap: 6px; cursor: pointer;
+  }
+  .gen-len { color: var(--accent); min-width: 24px; text-align: center; }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--accent);
+    color: #0e0d0b;
+    padding: 9px 18px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal.hidden { display: none; }
+  .modal-body {
+    background: var(--bg-2);
+    border: 1px solid var(--border-2);
+    border-radius: 4px;
+    padding: 28px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: auto;
+  }
+  .modal p { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+  .modal strong { color: var(--text); }
+  .search { margin-bottom: 18px; }
+  .footer {
+    margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 18px;
+    word-break: break-word;
+  }
+  .hint { color: var(--text-dim); font-size: 12px; margin-top: 6px; }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 76px; }
+  .pw-wrap .toggle {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+  .pw-wrap label + .toggle { top: calc(50% + 9px); }
+  .info-list p { margin-bottom: 8px; font-size: 12px; color: var(--text-dim); }
+  .info-list p strong { color: var(--text); }
+  @media (max-width: 560px) {
+    .screen { padding: 36px 18px 60px; }
+    h1 { font-size: 34px; }
+    .footer button { flex: 1 1 calc(50% - 4px); }
+    .entry-actions { width: 100%; }
+    .entry-actions button { flex: 1 1 calc(50% - 4px); }
+  }
+</style>
+</head>
+<body>
+
+<div id="unsupported" class="screen hidden">
+  <h1>Browser <em>unsupported</em></h1>
+  <p class="subtitle">This vault requires the Web Crypto API (window.crypto.subtle). Please open in a modern browser served over HTTPS or localhost.</p>
+</div>
+
+<div id="setup" class="screen hidden">
+  <h1>Create <em>vault</em></h1>
+  <p class="subtitle">Set a master password. There is no recovery — if you forget it, your data is gone.</p>
+  <form id="setupForm" autocomplete="off">
+    <div class="field pw-wrap">
+      <label for="setupPw1">Master password</label>
+      <input type="password" id="setupPw1" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+      <button type="button" class="toggle" data-toggle="setupPw1">Show</button>
+    </div>
+    <div class="field">
+      <label for="setupPw2">Confirm</label>
+      <input type="password" id="setupPw2" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+    </div>
+    <div class="row">
+      <button type="submit" class="primary">Create Vault</button>
+    </div>
+    <div class="error" id="setupError" role="alert"></div>
+    <p class="hint">Minimum 8 characters. PBKDF2-SHA256 / 250,000 iterations, AES-GCM 256.</p>
+  </form>
+</div>
+
+<div id="unlock" class="screen hidden">
+  <h1>Unlock <em>vault</em></h1>
+  <p class="subtitle">Enter your master password to decrypt your entries.</p>
+  <form id="unlockForm" autocomplete="off">
+    <div class="field pw-wrap">
+      <label for="unlockPw">Master password</label>
+      <input type="password" id="unlockPw" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+      <button type="button" class="toggle" data-toggle="unlockPw">Show</button>
+    </div>
+    <div class="row">
+      <button type="submit" class="primary" id="unlockBtn">Unlock</button>
+      <button type="button" id="resetBtn">Reset Vault</button>
+    </div>
+    <div class="error" id="unlockError" role="alert"></div>
+  </form>
+</div>
+
+<div id="vault" class="screen hidden">
+  <h1>Your <em>vault</em></h1>
+  <p class="subtitle">Encrypted locally with AES-GCM. Nothing leaves this browser.</p>
+
+  <input type="text" class="search" id="search" placeholder="Search by name or username…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+
+  <details>
+    <summary>Add new entry</summary>
+    <form id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="newName">Name</label>
+        <input type="text" id="newName" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="newUser">Username / email</label>
+        <input type="text" id="newUser" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="newPw">Password</label>
+        <input type="text" id="newPw" autocomplete="off" spellcheck="false">
+        <div class="gen-controls">
+          <input type="range" id="genLen" min="8" max="64" value="20" aria-label="Password length">
+          <span class="gen-len" id="genLenLabel">20</span>
+          <label class="inline"><input type="checkbox" id="genSym" checked> symbols</label>
+          <button type="button" id="genBtn">Generate</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="newNotes">Notes</label>
+        <textarea id="newNotes"></textarea>
+      </div>
+      <button type="submit" class="primary">Add entry</button>
+    </form>
+  </details>
+
+  <div id="entryList"></div>
+
+  <div class="footer">
+    <button id="exportBtn">Export</button>
+    <button id="shareBtn">Share</button>
+    <button id="importBtn">Import</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <button id="lockBtn">Lock</button>
+  </div>
+</div>
+
+<div id="shareModal" class="modal hidden" data-modal>
+  <div class="modal-body">
+    <h2>Share <em>vault</em></h2>
+    <p>Generate a self-contained, read-only copy of your vault. Recipients still need your master password to decrypt.</p>
+    <div class="row">
+      <button id="shareFileBtn" class="primary">Generate shareable file</button>
+      <button id="shareHostBtn">Generate hosted version</button>
+    </div>
+    <div id="shareInfo" style="margin-top:18px"></div>
+    <div class="row" style="margin-top:18px">
+      <button id="shareCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="emailModal" class="modal hidden" data-modal>
+  <div class="modal-body">
+    <h2>Email <em>vault</em></h2>
+    <p>Pick how you want to compose. The HTML file has already been downloaded — attach it to the draft, then send the master password through a separate channel.</p>
+    <div class="stack" id="emailLinks"></div>
+    <div class="row" style="margin-top:18px">
+      <button id="emailCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="importModal" class="modal hidden" data-modal>
+  <div class="modal-body">
+    <h2>Import <em>vault</em></h2>
+    <p>This will <strong>overwrite</strong> your current vault. You'll need the password used to encrypt the imported file. This cannot be undone.</p>
+    <div class="row">
+      <button id="importConfirmBtn" class="primary">Confirm overwrite</button>
+      <button id="importCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============ Constants ============
+  const PBKDF2_ITERATIONS = 250000;
+  const SALT_BYTES = 16;
+  const IV_BYTES = 12;
+  const STORAGE_KEY = 'vault.v1';
+
+  // ============ Crypto helpers ============
+  function b64encode(buf) {
+    const bytes = new Uint8Array(buf);
+    let s = '';
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  function b64decode(s) {
+    const bin = atob(s);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey(
+      'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+      baseKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+  async function encryptObject(key, obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+    const pt = new TextEncoder().encode(JSON.stringify(obj));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, pt);
+    return { iv: b64encode(iv), ciphertext: b64encode(ct) };
+  }
+  async function decryptToObject(key, ivB64, ctB64) {
+    const iv = b64decode(ivB64);
+    const ct = b64decode(ctB64);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct);
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  // ============ State ============
+  const state = { key: null, salt: null, entries: [] };
+
+  function loadBlob() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+  function saveBlob(blob) { localStorage.setItem(STORAGE_KEY, JSON.stringify(blob)); }
+  async function persistEntries() {
+    const enc = await encryptObject(state.key, state.entries);
+    saveBlob({
+      v: 1,
+      iterations: PBKDF2_ITERATIONS,
+      salt: b64encode(state.salt),
+      iv: enc.iv,
+      ciphertext: enc.ciphertext,
+      updated: new Date().toISOString()
+    });
+  }
+  function clearMemory() {
+    state.key = null;
+    state.salt = null;
+    state.entries = [];
+  }
+
+  // ============ View routing ============
+  function show(id) {
+    ['unsupported', 'setup', 'unlock', 'vault'].forEach(function (v) {
+      document.getElementById(v).classList.toggle('hidden', v !== id);
+    });
+  }
+  function decideView() {
+    if (!window.crypto || !window.crypto.subtle) { show('unsupported'); return; }
+    if (loadBlob()) show('unlock'); else show('setup');
+  }
+
+  // ============ Two-click confirm ============
+  function armBtn(btn, confirmLabel, onConfirm) {
+    if (btn.dataset.armed === '1') {
+      if (btn._armTimer) { clearTimeout(btn._armTimer); btn._armTimer = null; }
+      btn.dataset.armed = '0';
+      btn.classList.remove('armed');
+      btn.textContent = btn.dataset.origLabel || btn.textContent;
+      onConfirm();
+      return;
+    }
+    btn.dataset.armed = '1';
+    btn.dataset.origLabel = btn.textContent;
+    btn.classList.add('armed');
+    btn.textContent = confirmLabel;
+    btn._armTimer = setTimeout(function () {
+      btn.dataset.armed = '0';
+      btn.classList.remove('armed');
+      btn.textContent = btn.dataset.origLabel || btn.textContent;
+      btn._armTimer = null;
+    }, 3000);
+  }
+
+  // ============ Password toggles (data-toggle) ============
+  document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const input = document.getElementById(btn.dataset.toggle);
+      if (!input) return;
+      if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+      else { input.type = 'password'; btn.textContent = 'Show'; }
+    });
+  });
+
+  // ============ Setup ============
+  document.getElementById('setupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const err = document.getElementById('setupError');
+    err.textContent = '';
+    const p1 = document.getElementById('setupPw1').value;
+    const p2 = document.getElementById('setupPw2').value;
+    if (p1.length < 8) { err.textContent = 'Master password must be at least 8 characters.'; return; }
+    if (p1 !== p2) { err.textContent = 'Passwords do not match.'; return; }
+    try {
+      const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
+      const key = await deriveKey(p1, salt);
+      state.key = key;
+      state.salt = salt;
+      state.entries = [];
+      await persistEntries();
+      document.getElementById('setupPw1').value = '';
+      document.getElementById('setupPw2').value = '';
+      renderEntries();
+      show('vault');
+      toast('Vault created');
+    } catch (ex) {
+      err.textContent = 'Setup failed: ' + (ex && ex.message ? ex.message : 'unknown error');
+    }
+  });
+
+  // ============ Unlock ============
+  document.getElementById('unlockForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const pwInput = document.getElementById('unlockPw');
+    const pw = pwInput.value;
+    const err = document.getElementById('unlockError');
+    err.textContent = '';
+    const blob = loadBlob();
+    if (!blob) { err.textContent = 'No vault found in this browser.'; return; }
+    const btn = document.getElementById('unlockBtn');
+    btn.disabled = true;
+    btn.textContent = 'Unlocking…';
+    try {
+      const salt = b64decode(blob.salt);
+      const key = await deriveKey(pw, salt);
+      const entries = await decryptToObject(key, blob.iv, blob.ciphertext);
+      state.key = key;
+      state.salt = salt;
+      state.entries = Array.isArray(entries) ? entries : [];
+      pwInput.value = '';
+      renderEntries();
+      show('vault');
+    } catch (ex) {
+      err.textContent = 'Wrong password or corrupted vault.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Unlock';
+    }
+  });
+
+  // ============ Reset ============
+  document.getElementById('resetBtn').addEventListener('click', function (e) {
+    armBtn(e.currentTarget, 'Confirm reset?', function () {
+      localStorage.removeItem(STORAGE_KEY);
+      clearMemory();
+      document.getElementById('unlockPw').value = '';
+      document.getElementById('unlockError').textContent = '';
+      decideView();
+      toast('Vault wiped');
+    });
+  });
+
+  // ============ Entry rendering ============
+  function el(tag, props) {
+    const e = document.createElement(tag);
+    if (props) {
+      if (props.text != null) e.textContent = props.text;
+      if (props.cls) e.className = props.cls;
+      if (props.attrs) for (const k in props.attrs) e.setAttribute(k, props.attrs[k]);
+    }
+    return e;
+  }
+
+  function renderEntries() {
+    const filter = document.getElementById('search').value.trim().toLowerCase();
+    const list = document.getElementById('entryList');
+    list.innerHTML = '';
+    let items = state.entries.slice();
+    if (filter) {
+      items = items.filter(function (en) {
+        return (en.name || '').toLowerCase().indexOf(filter) >= 0
+            || (en.username || '').toLowerCase().indexOf(filter) >= 0;
+      });
+    }
+    if (items.length === 0) {
+      const msg = state.entries.length === 0
+        ? 'No entries yet. Use "Add new entry" above.'
+        : 'No matches.';
+      list.appendChild(el('p', { text: msg, cls: 'hint' }));
+      return;
+    }
+    items.sort(function (a, b) {
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    items.forEach(function (entry) { list.appendChild(renderEntry(entry)); });
+  }
+
+  function renderEntry(entry) {
+    const div = el('div', { cls: 'entry' });
+    div.appendChild(el('div', { text: entry.name || '(unnamed)', cls: 'entry-name' }));
+    if (entry.username) div.appendChild(el('div', { text: entry.username, cls: 'entry-user' }));
+
+    const pwDiv = el('div', { cls: 'entry-pw' });
+    pwDiv.textContent = '••••••••••••';
+    pwDiv.dataset.shown = '0';
+    div.appendChild(pwDiv);
+
+    if (entry.notes) div.appendChild(el('div', { text: entry.notes, cls: 'entry-notes' }));
+
+    const actions = el('div', { cls: 'entry-actions' });
+
+    const showBtn = el('button', { text: 'Show' });
+    showBtn.addEventListener('click', function () {
+      if (pwDiv.dataset.shown === '1') {
+        pwDiv.textContent = '••••••••••••';
+        pwDiv.dataset.shown = '0';
+        showBtn.textContent = 'Show';
+      } else {
+        pwDiv.textContent = entry.password || '';
+        pwDiv.dataset.shown = '1';
+        showBtn.textContent = 'Hide';
+      }
+    });
+    actions.appendChild(showBtn);
+
+    if (entry.username) {
+      const copyUserBtn = el('button', { text: 'Copy user' });
+      copyUserBtn.addEventListener('click', function () { copyText(entry.username || '', 'Username copied'); });
+      actions.appendChild(copyUserBtn);
+    }
+
+    const copyPwBtn = el('button', { text: 'Copy pw' });
+    copyPwBtn.addEventListener('click', function () { copyText(entry.password || '', 'Password copied'); });
+    actions.appendChild(copyPwBtn);
+
+    const delBtn = el('button', { text: 'Delete' });
+    delBtn.addEventListener('click', function () {
+      armBtn(delBtn, 'Confirm?', async function () {
+        state.entries = state.entries.filter(function (en) { return en.id !== entry.id; });
+        try {
+          await persistEntries();
+          renderEntries();
+          toast('Entry deleted');
+        } catch (ex) {
+          toast('Delete failed');
+        }
+      });
+    });
+    actions.appendChild(delBtn);
+
+    div.appendChild(actions);
+    return div;
+  }
+
+  // ============ Add entry ============
+  document.getElementById('addForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const name = document.getElementById('newName').value.trim();
+    const user = document.getElementById('newUser').value.trim();
+    const pw = document.getElementById('newPw').value;
+    const notes = document.getElementById('newNotes').value;
+    if (!name) return;
+    const entry = {
+      id: makeId(),
+      name: name,
+      username: user,
+      password: pw,
+      notes: notes,
+      updated: new Date().toISOString()
+    };
+    state.entries.push(entry);
+    try {
+      await persistEntries();
+      e.target.reset();
+      document.getElementById('genLenLabel').textContent = '20';
+      renderEntries();
+      toast('Entry added');
+    } catch (ex) {
+      toast('Save failed');
+    }
+  });
+
+  function makeId() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return Array.from(a).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  // ============ Generator ============
+  const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const SYMS = '!@#$%^&*()-_=+[]{};:,.<>/?';
+  function generatePassword(len, withSymbols) {
+    const charset = ALPHA + (withSymbols ? SYMS : '');
+    const arr = new Uint32Array(len);
+    crypto.getRandomValues(arr);
+    let out = '';
+    for (let i = 0; i < len; i++) out += charset.charAt(arr[i] % charset.length);
+    return out;
+  }
+  document.getElementById('genLen').addEventListener('input', function (e) {
+    document.getElementById('genLenLabel').textContent = e.target.value;
+  });
+  document.getElementById('genBtn').addEventListener('click', function () {
+    const len = parseInt(document.getElementById('genLen').value, 10) || 20;
+    const syms = document.getElementById('genSym').checked;
+    document.getElementById('newPw').value = generatePassword(len, syms);
+  });
+
+  // ============ Search ============
+  document.getElementById('search').addEventListener('input', renderEntries);
+
+  // ============ Footer actions ============
+  document.getElementById('lockBtn').addEventListener('click', function () {
+    clearMemory();
+    document.getElementById('unlockPw').value = '';
+    document.getElementById('unlockError').textContent = '';
+    document.getElementById('search').value = '';
+    decideView();
+    toast('Locked');
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    const blob = loadBlob();
+    if (!blob) return;
+    downloadFile('vault-backup-' + dateStr() + '.json', JSON.stringify(blob, null, 2), 'application/json');
+    toast('Backup exported');
+  });
+
+  document.getElementById('importBtn').addEventListener('click', function () {
+    document.getElementById('importFile').click();
+  });
+
+  let pendingImport = null;
+  document.getElementById('importFile').addEventListener('change', function (e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed || !parsed.ciphertext || !parsed.iv || !parsed.salt) throw new Error('Missing fields');
+        pendingImport = parsed;
+        showModal('importModal');
+      } catch (ex) {
+        toast('Invalid backup file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('importConfirmBtn').addEventListener('click', function () {
+    if (pendingImport) {
+      saveBlob(pendingImport);
+      pendingImport = null;
+      clearMemory();
+      hideModal('importModal');
+      decideView();
+      toast('Imported. Unlock to access.');
+    }
+  });
+  document.getElementById('importCancelBtn').addEventListener('click', function () {
+    pendingImport = null;
+    hideModal('importModal');
+  });
+
+  // ============ Share ============
+  document.getElementById('shareBtn').addEventListener('click', function () {
+    document.getElementById('shareInfo').innerHTML = '';
+    showModal('shareModal');
+  });
+  document.getElementById('shareCloseBtn').addEventListener('click', function () { hideModal('shareModal'); });
+  document.getElementById('shareFileBtn').addEventListener('click', function () {
+    handleShare('shared-vault-' + dateStr() + '.html', false);
+  });
+  document.getElementById('shareHostBtn').addEventListener('click', function () {
+    handleShare('index.html', true);
+  });
+
+  function handleShare(filename, withDeployInstructions) {
+    const blob = loadBlob();
+    if (!blob) return;
+    let html;
+    try {
+      html = buildStandalone(blob);
+    } catch (ex) {
+      toast('Could not build shared file');
+      return;
+    }
+    downloadFile(filename, html, 'text/html');
+    const info = document.getElementById('shareInfo');
+    info.innerHTML = '';
+    info.appendChild(el('p', { text: 'Downloaded: ' + filename, cls: 'hint' }));
+
+    if (withDeployInstructions) {
+      const det = document.createElement('details');
+      det.open = true;
+      const sum = el('summary', { text: 'How to deploy this file' });
+      det.appendChild(sum);
+      const wrap = el('div', { cls: 'info-list' });
+      const lines = [
+        ['GitHub Pages', 'Create a new repo → upload index.html to the root → Settings → Pages → Source: "Deploy from a branch", Branch: main / (root) → Save. Wait ~1 minute, then visit https://<user>.github.io/<repo>/.'],
+        ['Vercel', 'vercel.com/new → import the repo, or run "npx vercel" in the folder containing index.html.'],
+        ['Netlify', 'Drag-and-drop the file at app.netlify.com/drop. Done in seconds.'],
+        ['Cloudflare Pages', 'Cloudflare dashboard → Workers & Pages → Create → Pages → Upload assets → drop in index.html.']
+      ];
+      lines.forEach(function (pair) {
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = pair[0] + ': ';
+        p.appendChild(strong);
+        p.appendChild(document.createTextNode(pair[1]));
+        wrap.appendChild(p);
+      });
+      const note = document.createElement('p');
+      note.textContent = 'None of these require environment variables — all encryption stays in the browser.';
+      wrap.appendChild(note);
+      det.appendChild(wrap);
+      info.appendChild(det);
+    }
+
+    const emailBtn = el('button', { text: 'Email this file' });
+    emailBtn.style.marginTop = '12px';
+    emailBtn.addEventListener('click', function () { openEmailModal(filename); });
+    info.appendChild(emailBtn);
+  }
+
+  function openEmailModal(filename) {
+    const subj = 'Shared password vault (' + filename + ')';
+    const body =
+      'I am sharing my read-only password vault as a single HTML file.\n\n' +
+      'File: ' + filename + '\n' +
+      'Open the attached file in any modern browser, then unlock it with the master password I am sending separately.\n\n' +
+      '(Reminder: attach the downloaded file to this email before sending.)';
+    const enc = encodeURIComponent;
+    const gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=&su=' + enc(subj) + '&body=' + enc(body);
+    const outlook = 'https://outlook.live.com/mail/0/deeplink/compose?to=&subject=' + enc(subj) + '&body=' + enc(body);
+    const mailto = 'mailto:?subject=' + enc(subj) + '&body=' + enc(body);
+
+    const container = document.getElementById('emailLinks');
+    container.innerHTML = '';
+    const options = [
+      { text: 'Open Gmail (web)', href: gmail },
+      { text: 'Open Outlook (web)', href: outlook },
+      { text: 'Open default mail app', href: mailto }
+    ];
+    options.forEach(function (opt) {
+      const a = document.createElement('a');
+      a.href = opt.href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = opt.text;
+      a.className = 'btn';
+      container.appendChild(a);
+    });
+    const copyBtn = el('button', { text: 'Copy email text to clipboard' });
+    copyBtn.addEventListener('click', function () {
+      copyText('Subject: ' + subj + '\n\n' + body, 'Email text copied');
+    });
+    container.appendChild(copyBtn);
+    showModal('emailModal');
+  }
+  document.getElementById('emailCloseBtn').addEventListener('click', function () { hideModal('emailModal'); });
+
+  // ============ Modal helpers ============
+  function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
+  document.querySelectorAll('[data-modal]').forEach(function (m) {
+    m.addEventListener('click', function (e) { if (e.target === m) m.classList.add('hidden'); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('[data-modal]').forEach(function (m) { m.classList.add('hidden'); });
+    }
+  });
+
+  // ============ Utilities ============
+  function downloadFile(name, content, mime) {
+    const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+  function dateStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  async function copyText(text, msg) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext !== false) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      toast(msg || 'Copied');
+    } catch (ex) {
+      toast('Copy failed');
+    }
+  }
+  let toastTimer = null;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+
+  // ============ Standalone HTML builder ============
+  //
+  // Build a self-contained read-only viewer. The inner closing script tag
+  // is split as "<\/script>" inside the template literal so the OUTER HTML
+  // parser does not terminate this script block early. Do not change.
+  //
+  function buildStandalone(blob) {
+    const storeJson = JSON.stringify(blob)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026');
+    return standaloneTemplate(storeJson);
+  }
+
+  function standaloneTemplate(storeJson) {
+    // Built via plain string concatenation (no template-literal substitution).
+    // storeJson is the ONLY interpolated value, and JSON.stringify already
+    // emits valid JS literal syntax; we additionally escape <, >, & to
+    // <, >, & before getting here. The inner closing tag is
+    // written as <\/script> so the OUTER HTML parser does not terminate
+    // this script block early when reading the source of vault.html.
+    return '<!DOCTYPE html>\n'
++ '<html lang="en">\n'
++ '<head>\n'
++ '<meta charset="UTF-8">\n'
++ '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
++ '<title>Shared Vault</title>\n'
++ '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
++ '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
++ '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">\n'
++ '<style>\n'
++ '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\n'
++ ':root{--bg:#0e0d0b;--bg-2:#161410;--accent:#d4a64a;--accent-warm:#e6b85a;--text:#efe7d3;--text-dim:#9a917f;--border:#2a2620;--border-2:#3a342a;--danger:#d46a6a;--danger-bg:#2a1414}\n'
++ 'html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:14px;line-height:1.55;min-height:100vh}\n'
++ 'body{background-image:radial-gradient(ellipse 80% 50% at 15% 0%,rgba(212,166,74,.10),transparent 60%),radial-gradient(ellipse 70% 50% at 85% 100%,rgba(212,166,74,.05),transparent 60%);background-attachment:fixed}\n'
++ '.screen{max-width:760px;margin:0 auto;padding:64px 28px 80px}\n'
++ '.hidden{display:none!important}\n'
++ 'h1,h2{font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.01em;line-height:1.1}\n'
++ 'h1{font-size:44px;margin-bottom:6px}\n'
++ 'h1 em{font-style:italic;color:var(--accent);font-weight:400}\n'
++ 'h2{font-size:20px;margin-bottom:10px}\n'
++ '.subtitle{color:var(--text-dim);font-size:13px;margin-bottom:36px;max-width:540px}\n'
++ 'input[type=text],input[type=password]{width:100%;padding:10px 12px;background:var(--bg-2);color:var(--text);border:1px solid var(--border);border-radius:4px;font:inherit;font-size:14px;outline:none;transition:border-color .15s}\n'
++ 'input:focus{border-color:var(--accent)}\n'
++ 'label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em}\n'
++ '.field{margin-bottom:14px}\n'
++ 'button,.btn{padding:8px 16px;background:transparent;color:var(--text);border:1px solid var(--border-2);border-radius:4px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none;display:inline-block;transition:border-color .15s,color .15s,background .15s}\n'
++ 'button:hover,.btn:hover{border-color:var(--accent);color:var(--accent)}\n'
++ 'button.primary{background:var(--accent);color:#0e0d0b;border-color:var(--accent);font-weight:500}\n'
++ 'button.primary:hover{background:var(--accent-warm);border-color:var(--accent-warm);color:#0e0d0b}\n'
++ 'button:disabled{opacity:.6;cursor:not-allowed}\n'
++ '.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}\n'
++ '.entry{border:1px solid var(--border);border-radius:4px;padding:16px 18px;margin-bottom:10px;background:var(--bg-2)}\n'
++ '.entry-name{font-family:"Fraunces",Georgia,serif;font-size:19px;font-weight:600;color:var(--text);margin-bottom:2px}\n'
++ '.entry-user{color:var(--text-dim);font-size:13px;margin-bottom:10px;word-break:break-all}\n'
++ '.entry-pw{font-family:"JetBrains Mono",monospace;background:var(--bg);padding:8px 12px;border-radius:3px;margin-bottom:10px;word-break:break-all;font-size:13px;border:1px solid var(--border);color:var(--accent)}\n'
++ '.entry-notes{font-size:12px;color:var(--text-dim);margin-bottom:10px;white-space:pre-wrap;word-break:break-word;padding:6px 0;border-top:1px dashed var(--border)}\n'
++ '.entry-actions{display:flex;gap:6px;flex-wrap:wrap}\n'
++ '.entry-actions button{padding:5px 11px;font-size:12px}\n'
++ '.search{margin-bottom:18px}\n'
++ '.error{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px;word-break:break-word}\n'
++ '.hint{color:var(--text-dim);font-size:12px;margin-top:6px}\n'
++ '.pw-wrap{position:relative}\n'
++ '.pw-wrap input{padding-right:76px}\n'
++ '.pw-wrap .toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);padding:4px 10px;font-size:11px}\n'
++ '.pw-wrap label+.toggle{top:calc(50% + 9px)}\n'
++ 'details{margin:16px 0;border:1px solid var(--border);border-radius:4px;padding:12px 14px;background:var(--bg-2)}\n'
++ 'details summary{cursor:pointer;color:var(--accent);font-size:13px;list-style:none}\n'
++ 'details summary::-webkit-details-marker{display:none}\n'
++ 'details summary::before{content:"+ "}\n'
++ 'details[open] summary::before{content:"− "}\n'
++ 'details[open] summary{margin-bottom:10px}\n'
++ '.lock-banner{background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:4px;margin-bottom:14px;font-size:13px}\n'
++ '.diag{background:rgba(212,166,74,.08);border:1px solid var(--border-2);padding:10px 14px;border-radius:4px;margin-top:10px;font-size:12px;color:var(--text-dim)}\n'
++ '.diag strong{color:var(--accent)}\n'
++ '@media (max-width:560px){.screen{padding:36px 18px 60px}h1{font-size:34px}.entry-actions{width:100%}.entry-actions button{flex:1 1 calc(50% - 4px)}}\n'
++ '</style>\n'
++ '</head>\n'
++ '<body>\n'
++ '<div id="unsupported" class="screen hidden">\n'
++ '  <h1>Browser <em>unsupported</em></h1>\n'
++ '  <p class="subtitle">This shared vault requires the Web Crypto API (window.crypto.subtle). Open in a modern browser.</p>\n'
++ '</div>\n'
++ '<div id="unlock" class="screen hidden">\n'
++ '  <h1>Shared <em>vault</em></h1>\n'
++ '  <p class="subtitle">Enter the master password to decrypt this read-only copy. Decryption happens entirely in your browser.</p>\n'
++ '  <form id="unlockForm" autocomplete="off">\n'
++ '    <div class="field pw-wrap">\n'
++ '      <label for="unlockPw">Master password</label>\n'
++ '      <input type="password" id="unlockPw" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" required>\n'
++ '      <button type="button" class="toggle" id="pwToggle">Show</button>\n'
++ '    </div>\n'
++ '    <div class="row">\n'
++ '      <button type="submit" class="primary" id="unlockBtn">Unlock</button>\n'
++ '    </div>\n'
++ '    <div class="error" id="unlockError" role="alert"></div>\n'
++ '    <div id="diag"></div>\n'
++ '    <div id="lockNotice"></div>\n'
++ '    <details style="margin-top:18px">\n'
++ '      <summary>Trouble unlocking?</summary>\n'
++ '      <div class="hint" style="margin-top:8px">\n'
++ '        <p style="margin-bottom:8px"><strong style="color:var(--accent)">Common causes:</strong></p>\n'
++ '        <p style="margin-bottom:6px">• Caps Lock is on, or a non-US keyboard is producing a different character.</p>\n'
++ '        <p style="margin-bottom:6px">• You pasted the password and a leading/trailing space, tab, or invisible Unicode character was copied with it.</p>\n'
++ '        <p style="margin-bottom:6px">• You are using a different password than the one used to create the source vault. Passwords from autofill / browser-saved entries may not match.</p>\n'
++ '        <p style="margin-bottom:6px">• The "Show" toggle reveals what you have typed — verify character-by-character.</p>\n'
++ '        <p style="margin-bottom:6px">• Decryption is intentionally slow (~1s) on first attempt; wait for the "Unlock" button to return.</p>\n'
++ '        <p>• If you have triggered the brute-force lockout, wait out the cooldown before trying again.</p>\n'
++ '      </div>\n'
++ '    </details>\n'
++ '  </form>\n'
++ '</div>\n'
++ '<div id="vault" class="screen hidden">\n'
++ '  <h1>Shared <em>vault</em></h1>\n'
++ '  <p class="subtitle">Read-only view. Nothing here is editable.</p>\n'
++ '  <input type="text" class="search" id="search" placeholder="Search by name or username…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">\n'
++ '  <div id="entryList"></div>\n'
++ '  <div style="margin-top:32px;padding-top:18px;border-top:1px solid var(--border)">\n'
++ '    <button id="relockBtn">Lock</button>\n'
++ '  </div>\n'
++ '</div>\n'
++ '<script>\n'
++ '(function(){\n'
++ '  "use strict";\n'
++ '  var STORE = ' + storeJson + ';\n'
++ '  var PBKDF2_ITERATIONS = 250000;\n'
++ '  var LOCK_KEY = "sharedVault.lockout.v1";\n'
++ '  function b64decode(s){var bin=atob(s);var out=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}\n'
++ '  async function deriveKey(pw, salt){\n'
++ '    var baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), {name:"PBKDF2"}, false, ["deriveKey"]);\n'
++ '    return crypto.subtle.deriveKey({name:"PBKDF2", salt:salt, iterations:PBKDF2_ITERATIONS, hash:"SHA-256"}, baseKey, {name:"AES-GCM",length:256}, false, ["decrypt"]);\n'
++ '  }\n'
++ '  async function decrypt(key, ivB64, ctB64){\n'
++ '    var iv = b64decode(ivB64); var ct = b64decode(ctB64);\n'
++ '    var pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:iv}, key, ct);\n'
++ '    return JSON.parse(new TextDecoder().decode(pt));\n'
++ '  }\n'
++ '  function show(id){ ["unsupported","unlock","vault"].forEach(function(v){document.getElementById(v).classList.toggle("hidden", v!==id)}); }\n'
++ '  if(!window.crypto || !window.crypto.subtle){ show("unsupported"); return; }\n'
++ '  show("unlock");\n'
++ '\n'
++ '  // Lockout state in localStorage.\n'
++ '  function loadLockout(){ try{ var raw=localStorage.getItem(LOCK_KEY); return raw?JSON.parse(raw):{count:0,until:0} }catch(e){return {count:0,until:0}} }\n'
++ '  function saveLockout(s){ try{ localStorage.setItem(LOCK_KEY, JSON.stringify(s)) }catch(e){} }\n'
++ '  function clearLockout(){ try{ localStorage.removeItem(LOCK_KEY) }catch(e){} }\n'
++ '  function lockoutFor(count){ if(count<=2) return 0; if(count===3) return 30*1000; if(count===4) return 2*60*1000; return 10*60*1000; }\n'
++ '  function fmtRemaining(ms){ var s=Math.ceil(ms/1000); if(s<60) return s+"s"; var m=Math.floor(s/60); var r=s%60; return m+"m"+(r?" "+r+"s":""); }\n'
++ '  var lockTimer=null;\n'
++ '  function updateLockNotice(){\n'
++ '    var el=document.getElementById("lockNotice"); var btn=document.getElementById("unlockBtn"); var inp=document.getElementById("unlockPw");\n'
++ '    var s=loadLockout(); var now=Date.now();\n'
++ '    if(s.until && s.until>now){\n'
++ '      var rem=s.until-now;\n'
++ '      el.innerHTML="";\n'
++ '      var div=document.createElement("div"); div.className="lock-banner";\n'
++ '      div.textContent="Too many wrong attempts. Try again in " + fmtRemaining(rem) + ".";\n'
++ '      el.appendChild(div);\n'
++ '      btn.disabled=true; inp.disabled=true;\n'
++ '      if(lockTimer) clearTimeout(lockTimer);\n'
++ '      lockTimer=setTimeout(updateLockNotice, 1000);\n'
++ '    } else {\n'
++ '      el.innerHTML=""; btn.disabled=false; inp.disabled=false;\n'
++ '      if(lockTimer){ clearTimeout(lockTimer); lockTimer=null; }\n'
++ '    }\n'
++ '  }\n'
++ '  updateLockNotice();\n'
++ '\n'
++ '  function describeInvisibles(pw){\n'
++ '    var issues=[];\n'
++ '    if(pw.length===0) return issues;\n'
++ '    if(/^\\s/.test(pw)) issues.push("leading whitespace");\n'
++ '    if(/\\s$/.test(pw)) issues.push("trailing whitespace");\n'
++ '    var invisibleRe = /[\\u00A0\\u200B\\u200C\\u200D\\uFEFF]/;\n'
++ '    if(invisibleRe.test(pw)) issues.push("invisible Unicode character (NBSP, zero-width, or BOM)");\n'
++ '    return issues;\n'
++ '  }\n'
++ '\n'
++ '  document.getElementById("pwToggle").addEventListener("click", function(){\n'
++ '    var inp=document.getElementById("unlockPw"); var btn=this;\n'
++ '    if(inp.type==="password"){ inp.type="text"; btn.textContent="Hide"; } else { inp.type="password"; btn.textContent="Show"; }\n'
++ '  });\n'
++ '\n'
++ '  var decryptedEntries=null;\n'
++ '\n'
++ '  document.getElementById("unlockForm").addEventListener("submit", async function(e){\n'
++ '    e.preventDefault();\n'
++ '    var lock=loadLockout();\n'
++ '    if(lock.until && lock.until>Date.now()){ updateLockNotice(); return; }\n'
++ '    var pwInput=document.getElementById("unlockPw"); var pw=pwInput.value;\n'
++ '    var err=document.getElementById("unlockError"); err.textContent="";\n'
++ '    var diag=document.getElementById("diag"); diag.innerHTML="";\n'
++ '    var btn=document.getElementById("unlockBtn"); btn.disabled=true; btn.textContent="Unlocking…";\n'
++ '    try{\n'
++ '      var salt = b64decode(STORE.salt);\n'
++ '      var key = await deriveKey(pw, salt);\n'
++ '      var entries = await decrypt(key, STORE.iv, STORE.ciphertext);\n'
++ '      decryptedEntries = Array.isArray(entries)?entries:[];\n'
++ '      clearLockout();\n'
++ '      pwInput.value="";\n'
++ '      renderEntries();\n'
++ '      show("vault");\n'
++ '    } catch(ex){\n'
++ '      var s=loadLockout(); s.count=(s.count||0)+1;\n'
++ '      var cooldown = lockoutFor(s.count);\n'
++ '      s.until = cooldown ? Date.now()+cooldown : 0;\n'
++ '      saveLockout(s);\n'
++ '      err.textContent="Wrong password.";\n'
++ '      var issues = describeInvisibles(pw);\n'
++ '      if(issues.length){\n'
++ '        var d=document.createElement("div"); d.className="diag";\n'
++ '        var strong=document.createElement("strong"); strong.textContent="Hint: ";\n'
++ '        d.appendChild(strong);\n'
++ '        d.appendChild(document.createTextNode("the password you entered contains " + issues.join(", ") + ". This often happens when copy/pasting. Try retyping it manually."));\n'
++ '        diag.appendChild(d);\n'
++ '      }\n'
++ '      updateLockNotice();\n'
++ '    } finally {\n'
++ '      btn.textContent="Unlock";\n'
++ '      if(!loadLockout().until || loadLockout().until<=Date.now()) btn.disabled=false;\n'
++ '    }\n'
++ '  });\n'
++ '\n'
++ '  function el(tag, props){var e=document.createElement(tag); if(props){ if(props.text!=null) e.textContent=props.text; if(props.cls) e.className=props.cls; } return e;}\n'
++ '\n'
++ '  function renderEntries(){\n'
++ '    var filter=document.getElementById("search").value.trim().toLowerCase();\n'
++ '    var list=document.getElementById("entryList"); list.innerHTML="";\n'
++ '    if(!decryptedEntries) return;\n'
++ '    var items=decryptedEntries.slice();\n'
++ '    if(filter){ items=items.filter(function(en){ return (en.name||"").toLowerCase().indexOf(filter)>=0 || (en.username||"").toLowerCase().indexOf(filter)>=0; }); }\n'
++ '    if(items.length===0){ list.appendChild(el("p",{text: decryptedEntries.length===0?"This vault is empty.":"No matches.", cls:"hint"})); return; }\n'
++ '    items.sort(function(a,b){ return (a.name||"").localeCompare(b.name||""); });\n'
++ '    items.forEach(function(entry){ list.appendChild(renderEntry(entry)); });\n'
++ '  }\n'
++ '\n'
++ '  function renderEntry(entry){\n'
++ '    var div=el("div",{cls:"entry"});\n'
++ '    div.appendChild(el("div",{text: entry.name||"(unnamed)", cls:"entry-name"}));\n'
++ '    if(entry.username) div.appendChild(el("div",{text: entry.username, cls:"entry-user"}));\n'
++ '    var pwDiv=el("div",{cls:"entry-pw"}); pwDiv.textContent="••••••••••••"; pwDiv.dataset.shown="0";\n'
++ '    div.appendChild(pwDiv);\n'
++ '    if(entry.notes) div.appendChild(el("div",{text: entry.notes, cls:"entry-notes"}));\n'
++ '    var actions=el("div",{cls:"entry-actions"});\n'
++ '    var showBtn=el("button",{text:"Show"});\n'
++ '    showBtn.addEventListener("click", function(){\n'
++ '      if(pwDiv.dataset.shown==="1"){ pwDiv.textContent="••••••••••••"; pwDiv.dataset.shown="0"; showBtn.textContent="Show"; }\n'
++ '      else { pwDiv.textContent=entry.password||""; pwDiv.dataset.shown="1"; showBtn.textContent="Hide"; }\n'
++ '    });\n'
++ '    actions.appendChild(showBtn);\n'
++ '    if(entry.username){\n'
++ '      var copyU=el("button",{text:"Copy user"});\n'
++ '      copyU.addEventListener("click", function(){ copyText(entry.username||"", "Username copied"); });\n'
++ '      actions.appendChild(copyU);\n'
++ '    }\n'
++ '    var copyP=el("button",{text:"Copy pw"});\n'
++ '    copyP.addEventListener("click", function(){ copyText(entry.password||"", "Password copied"); });\n'
++ '    actions.appendChild(copyP);\n'
++ '    div.appendChild(actions);\n'
++ '    return div;\n'
++ '  }\n'
++ '\n'
++ '  document.getElementById("search").addEventListener("input", renderEntries);\n'
++ '  document.getElementById("relockBtn").addEventListener("click", function(){\n'
++ '    decryptedEntries=null;\n'
++ '    document.getElementById("entryList").innerHTML="";\n'
++ '    document.getElementById("search").value="";\n'
++ '    show("unlock");\n'
++ '  });\n'
++ '\n'
++ '  async function copyText(text, msg){\n'
++ '    try{\n'
++ '      if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(text); }\n'
++ '      else { var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }\n'
++ '      flash(msg||"Copied");\n'
++ '    } catch(ex){ flash("Copy failed"); }\n'
++ '  }\n'
++ '  function flash(msg){\n'
++ '    var t=document.getElementById("toast");\n'
++ '    if(!t){ t=document.createElement("div"); t.id="toast"; t.style.cssText="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#d4a64a;color:#0e0d0b;padding:9px 18px;border-radius:4px;font-weight:500;font-size:13px;z-index:100;transition:opacity .2s"; document.body.appendChild(t); }\n'
++ '    t.textContent=msg; t.style.opacity="1";\n'
++ '    if(t._timer) clearTimeout(t._timer);\n'
++ '    t._timer=setTimeout(function(){ t.style.opacity="0"; }, 1800);\n'
++ '  }\n'
++ '})();\n'
++ '<\/script>\n'
++ '</body>\n'
++ '</html>\n';
+  }
+
+  // ============ Init ============
+  decideView();
+})();
+</script>
+</body>
+</html>
